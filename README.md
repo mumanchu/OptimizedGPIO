@@ -1,30 +1,33 @@
 # FastGPIO
 
-This library is a single include file that provides fast Digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 MCUs. The code from the MCU is selected automatically by `#ifdef` directives, so you don't need to do anything special.
+This library is a single include file that provides fast digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 MCUs. The code for the MCU is selected automatically by `#ifdef` directives, so you don't need to do anything special.
+
+This voluminous README text (sorry) is aimed at beginners. The rest of us probably know all this stuff already.
+
 
 ## Why do we need faster I/O?
 
 The traditional `digitalRead()` and `digitalWrite()` methods are quite slow when compared to code that accesses the microcontroller's GPIO registers directly.
 
-The reason for this is that a lot of work is done for each access which could be done by `begin()`. This saves a lot of time when the program is running, and is particularly important in an interrupt handler (ISR) which must be as short as possible.
+The reason for this is that a lot of work is done for each access which could be done by a `begin()` method, which would save a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR) which must be as short as possible.
 
 Here is the standard Arduino code for `digitalWrite()`. The lines marked with '*' can be called in `begin()`. The lines marked with '**' are not needed if you are sure the output is not a PWM output. 
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
 {
-	uint8_t timer = digitalPinToTimer(pin);    //**
-	uint8_t bit = digitalPinToBitMask(pin);    //*
-	uint8_t port = digitalPinToPort(pin);      //*
+	uint8_t timer = digitalPinToTimer(pin); //**
+	uint8_t bit = digitalPinToBitMask(pin); //*
+	uint8_t port = digitalPinToPort(pin);   //*
 	volatile uint8_t *out;
 
-	if (port == NOT_A_PIN) return;
+	if (port == NOT_A_PIN) return;  //*
 
 	// If the pin that support PWM output, we need to turn it off
 	// before doing a digital write.
-	if (timer != NOT_ON_TIMER) turnOffPWM(timer);  //**
+	if (timer != NOT_ON_TIMER) turnOffPWM(timer); //**
 
-	out = portOutputRegister(port);          //*
+	out = portOutputRegister(port); //*
 
 	uint8_t oldSREG = SREG;
 	cli();
@@ -38,13 +41,13 @@ void digitalWrite(uint8_t pin, uint8_t val)
 	SREG = oldSREG;
 }
 ```
-The above code does a read-modify-write, which is why it must disable interrupts while updating the output. SREG is the AVR's Status Register which contains the 'Global Interrupt Enable' bit. It first saves the register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;`. This is good, because it leaves the interrupt state in the same state it was before, either enabled or disabled. 
+The above code does a read-modify-write, which is why it must disable interrupts while updating the output. SREG is the AVR's Status Register which contains the 'Global Interrupt Enable' bit. It first saves the register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;`. This is good, because it leaves the interrupt state in the same state it was in before, either enabled or disabled. 
 
-If you used `sti()` or `interrupts()` after updating the output then it would enable interrupts as a side-effect. This is very bad if you want them to be disbled, and can be fatal in an interrupt handler which expects interrupts to be disabled.
+If you used `sti()` or `interrupts()` instead of `SREG = oldSREG;` then it would enable interrupts as a side-effect! This is very bad if you want them to remain disabled, and can be fatal in an interrupt handler which expects interrupts to be disabled until it returns.
 
-The problem with read-modify-write is that an interrupt might occur between the read and the write which changes the register that was just read, and the subsequent write will cause those changes to be lost. This is the problem with the toggle() methods.
+The problem with read-modify-write is that an interrupt might occur _between_ the read and the write which changes the register that was just read, and the subsequent write will cause those changes to be overwritten. 
 
-The `toggle()` methods in this library have patched-out code to prevent this happening. You don't need this code if you _know_ that output is _never_ modified by an interrupt, which is why it's patched out. Disabling/enabling interrupts also slows it down, so there's no point in doing it if you don't need it.
+This is also a problem with the `toggle()` methods. The `toggle()` methods in this library have patched-out code to prevent this happening. You don't need this code if you _know_ that the output is _never_ modified by an interrupt, which is why it is patched out. Disabling/enabling interrupts also slows it down, so there's no point in doing it if you don't need it.
 
 Some MCUs, like the SAMD, have special registers where you can write just one bit to set or clear a digital output, e.g. OUTSET and OUTCLR. This is great because it does not need a dangerous (and slower) read-modify-write to set an output and you don't need to disable interrupts.
 
@@ -52,9 +55,21 @@ Some MCUs, like the SAMD, have special registers where you can write just one bi
 
 TODO add nointerrupts and restoreinterrupts?
 
-## Timing Comaprisons
+## Timing Comparisons
 
-This table compares the standard `digitalRead()` and `digitWrite()` calls with the FastGPIO methods for each MCU type and a couple of different clock speeds. You can see it makes a huge difference, especially if you are doing something like "bit-banging" multiple bits into a shift register - a nice way to extend the number of outputs, see ???
+This table compares the standard `digitalRead()` and `digitWrite()` calls with the FastGPIO methods for some MCU types and some different clock speeds. You can see it makes a huge difference. This effect is accumulative if you are doing something intensive like "bit-banging" multiple bits into a shift register.
+
+
+| Method           | STM32 xMHz | SAMD21 xMHz | SAMD51 xMHz | ATxxx xMHz | ESP32 xMHz | 
+| :---------       | :--------- | :---------  | :---------  | :--------- | :--------- |
+| digitalRead()    |            |             |             |            |            |
+| FastGPIO.read()  |            |             |             |            |            |
+| digitalWrite()   |            |             |             |            |            |
+| FastGPIO.write() |            |             |             |            |            |
+
+
+Bit-banging a shift register 
+
 
 
 ## Using the Library
@@ -66,7 +81,10 @@ This table compares the standard `digitalRead()` and `digitWrite()` calls with t
 
 
 
+<details>
+<summary>Click to see the code</summary>
 
+###
 
 ```cpp
 #pragma once
@@ -329,16 +347,296 @@ public:
 };
 
 #endif
+```
+</details>
 
 
 ## Using FastGPIO to bit-bang a serial shift register
 
-This is a nice application of FastGPIO...
+This is a nice application for FastGPIO and it makes huge difference.
+
+The cheapest way to extend the number of outputs of your MCU is to add a 'serial shift register' chip. This is a 'serial in parallel out' chip which lets you clock in bits serially, then transfer them to an 8 or 16-bit output register.
+
+You need 3 outputs to write to it, DATA, CLOCK and STROBE (although they may have different names). CLOCK clocks in a DATA bit on its rising edge. After 8 or 16 bits have been clocked in, STROBE transfers the data to the outputs.
+
+There are several versions of this chip, such as 74HC595, CD4095, ...
+
+TODO timing chart
+
+TODO source code
 
 
+<details>
+<summary>Click to see the code</summary>
+
+###
+
+```cpp
+// Example using a 74HC595 8-bit shift register as an Output Expander
+// muman.ch, 2025.06.21
+
+#if 0
+// Fast Version 
+// This works only on the STM32F103xB MCU
+// On a 72MHz STM32F103 the takes 9.2uS to write 8 bits
+// The bit-bang clock runs at 1.18MHz
+
+#include <stm32f103xb.h>
+#include <stm32f1xx_hal_gpio.h>
 
 
+class Encoder74HC595
+{
+protected:
+	#define SET_PIN(port, pin)     ((port)->BSRR = (pin))
+	#define CLEAR_PIN(port, pin)   ((port)->BSRR = (pin << 16))
+	#define READ_PIN(port, pin)    ((port)->IDR & (pin))
+	//#define TOGGLE_PIN(port, pin)  ((port)->ODR  ^= (pin))
+
+	// data bit, 0 or 1
+	GPIO_TypeDef* portSER;
+	int maskSER;
+	// clock shift register to output latches on rising edge
+	GPIO_TypeDef* portRCLK;
+	int maskRCLK;
+	// data clock, data bit clocked into shift register on rising edge
+	GPIO_TypeDef* portSRCLK;
+	int maskSRCLK;
+	// clear shift register on falling edge
+	GPIO_TypeDef* portSRCLR;
+	int maskSRCLR;
+	// output enable, active low
+	byte pinOE;
+
+	// current state of the port
+	byte curData8 = 0;
+
+public:
+	void begin(byte pinSER, byte pinRCLK, byte pinSRCLK, 
+		byte pinSRCLR, byte pinOE = 255);
+	void enableOutputs(bool enable);
+	void clear();
+	void writeBit(byte bit, bool value);
+	void writeByte(byte data8);
+	bool readBit(byte bit) { return curData8 & (1 << bit); }
+	byte readByte() { return curData8; }
+
+	bool test(byte pinQH);
+	byte txRx(GPIO_TypeDef* portQH, int naskQH, byte dataOut);
+};
 
 
+void Encoder74HC595::begin(byte pinSER, byte pinRCLK, 
+	byte pinSRCLK, byte pinSRCLR, byte pinOE)
+{
+	// clear shift register, falling edge
+	portSRCLR = digitalPinToPort(pinSRCLR);
+	maskSRCLR = digitalPinToBitMask(pinSRCLR);
+	pinMode(pinSRCLR, OUTPUT);
+	CLEAR_PIN(portSRCLR, maskSRCLR);
+	SET_PIN(portSRCLR, maskSRCLR);
 
+	// clock shift register to output latches on rising edge
+	portRCLK = digitalPinToPort(pinRCLK);
+	maskRCLK = digitalPinToBitMask(pinRCLK);
+	pinMode(pinRCLK, OUTPUT);
+	CLEAR_PIN(portRCLK, maskRCLK);
+	SET_PIN(portRCLK, maskRCLK);
+	CLEAR_PIN(portRCLK, maskRCLK);
+
+	// data bit, 0 or 1
+	portSER = digitalPinToPort(pinSER);
+	maskSER = digitalPinToBitMask(pinSER);
+	pinMode(pinSER, OUTPUT);
+	CLEAR_PIN(portSER, maskSER);
+
+	// data clock, data bit clocked into shift register on rising edge
+	portSRCLK = digitalPinToPort(pinSRCLK);
+	maskSRCLK = digitalPinToBitMask(pinSRCLK);
+	pinMode(pinSRCLK, OUTPUT);
+	CLEAR_PIN(portSRCLK, maskSRCLK);
+
+	// optional output enable, active low
+	this->pinOE = pinOE;
+	if (pinOE < 255)
+		pinMode(pinOE, OUTPUT);
+}
+
+// Enable/disable outputs
+void Encoder74HC595::enableOutputs(bool enable)
+{
+	if (pinOE < 255)
+		digitalWrite(pinOE, !enable);
+}
+
+// Clear all outputs
+void Encoder74HC595::clear()
+{
+	// clear shift register on falling edge
+	CLEAR_PIN(portSRCLR, maskSRCLR);
+	SET_PIN(portSRCLR, maskSRCLR);
+
+	// transfer the shift register to the output latches on rising edge
+	SET_PIN(portRCLK, maskRCLK);
+	CLEAR_PIN(portRCLK, maskRCLK);
+
+	curData8 = 0;
+}
+
+// Write all 8 bits to the outputs
+void Encoder74HC595::writeByte(byte data8)
+{
+	curData8 = data8;
+
+	// clock 8 data bits into the shift register, ms bit first
+	// bit7 = QH .. bit 0=QA
+	for (int mask = 0x80; mask; mask >>= 1) {
+
+		// clock the next data bit into the shift register
+		if (data8 & mask)
+			SET_PIN(portSER, maskSER);
+		else
+			CLEAR_PIN(portSER, maskSER);
+		SET_PIN(portSRCLK, maskSRCLK);
+		CLEAR_PIN(portSRCLK, maskSRCLK);
+	}
+
+	// transfer the shift register to the output latches on rising edge
+	SET_PIN(portRCLK, maskRCLK);
+	CLEAR_PIN(portRCLK, maskRCLK);
+}
+
+// Write a single bit to one output
+void Encoder74HC595::writeBit(byte bit, bool value)
+{
+	if (bit > 7)
+		return;
+	int mask = 1 << bit;
+	byte curData;
+	if (value)
+		curData = curData8 | mask;
+	else
+		curData = curData8 & ~mask;
+	writeByte(curData);
+}
+
+
+// Shift Test
+// Tests the byte shifted out of QH is the same as the byte
+// that was previously shifted in.
+// Output states are not changed.
+// Requires an extra input connection to the chip's QH pin.
+bool Encoder74HC595::test(byte pinQH)
+{
+	GPIO_TypeDef* portQH = digitalPinToPort(pinQH);
+	int maskQH = digitalPinToBitMask(pinQH);
+
+	byte b1 = rand();
+	byte b2 = rand();
+	byte b3 = txRx(portQH, maskQH, b1);
+	byte b4 = txRx(portQH, maskQH, b2);
+	byte b5 = txRx(portQH, maskQH, b3);
+
+	return b4 == b1 && b5 == b2;
+}
+
+byte Encoder74HC595::txRx(GPIO_TypeDef* portQH, int maskQH, byte dataOut)
+{
+	byte dataIn = 0;
+	for (int mask = 0x80; mask; mask >>= 1) {
+		// read the value shifted out of the QH bit
+		if (READ_PIN(portQH, maskQH))
+			dataIn |= mask;
+		// clock the next data bit into the shift register
+		if (dataOut & mask)
+			SET_PIN(portSER, maskSER);
+		else
+			CLEAR_PIN(portSER, maskSER);
+		SET_PIN(portSRCLK, maskSRCLK);
+		CLEAR_PIN(portSRCLK, maskSRCLK);
+	}
+	return dataIn;
+}
+
+Encoder74HC595 enc;
+
+
+void setup()
+{
+	Serial.begin(115200);
+	delay(3000);
+	Serial.println("\nMCU Started...");
+
+	enc.begin(D7, D6, D5, D4);
+}
+
+byte data = 0xa5;
+
+void loop()
+{
+	enc.writeByte(data);
+	data = ~data;
+
+	if (!enc.test(D3)) {
+		Serial.println("failed");
+		Serial.flush();
+	}
+}
+
+
+#else
+
+// Conventional Slow Version
+// This should work on all devices
+// On a 72MHz STM32F103, this takes 46.2uS to write 8 bits
+// The bit-bang clock runs at 197.3KHz
+
+#define SER   D7	// data bit, 0 or 1
+#define RCLK  D6	// clock shift register to output latches, rising edge
+#define SRCLK D5	// data clock, data bit clocked into shift register on rising edge
+#define SRCLR D4	// clear shift register, falling edge
+
+void setup()
+{
+	pinMode(RCLK, OUTPUT);
+	digitalWrite(RCLK, 0);
+
+	pinMode(SRCLK, OUTPUT);
+	digitalWrite(SRCLK, 0);
+
+	pinMode(SER, OUTPUT);
+	digitalWrite(SRCLK, 0);
+
+	pinMode(SRCLR, OUTPUT);
+	digitalWrite(SRCLR, 0);
+	digitalWrite(SRCLR, 1);
+}
+
+byte data = 0xa5;
+
+void loop() 
+{
+	// clock 8 data bits into the shift register, ms bit first
+	// bit7 = QH .. bit 0=QA
+	for (int mask = 0x80; mask; mask >>= 1) {
+		// write data bit
+		digitalWrite(SER, data & mask ? 1 : 0);
+		// clock the data bit into the shift register
+		digitalWrite(SRCLK, 1);
+		digitalWrite(SRCLK, 0);
+	}
+
+	// transfer the shift register to the output latches
+	digitalWrite(RCLK, 1);
+	digitalWrite(RCLK, 0);
+
+	// invert the data and repeat
+	data = ~data;
+}
+
+#endif
 ```
+</details>
+
+
+
