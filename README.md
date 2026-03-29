@@ -1,17 +1,18 @@
-# FastGPIO
+# OptimizedGPIO
 
-This library is a single include file that provides fast digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 MCUs. The code for the MCU is selected automatically by `#ifdef` directives, so you don't need to do anything special.
+This library is a single include file that provides fast optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 MCUs. The code for the MCU is selected automatically by `#ifdef` directives, so you don't need to do anything special.
 
-This voluminous README text (sorry) is aimed at beginners. The rest of us probably know this stuff already.
+This voluminous README text is aimed at fledgling Arduino developers. The rest of us probably know all this stuff already.
 
+_Joke of the week: "His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
 
 ## Why do we need faster I/O?
 
-The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that accesses the microcontroller's GPIO registers directly.
+The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's General-Purpose Input/Output (GPIO) registers.
 
 The reason for this is that a lot of work is done for each access which could be done in a `begin()` method. This would save a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible.
 
-Here is the standard Arduino code for `digitalWrite()`. The lines marked with '*' can be called in `begin()`. The lines marked with '**' are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register.
+Below is the standard Arduino code for `digitalWrite()`. The lines marked with '*' can be called in `begin()`. The lines marked with '**' are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register.
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
@@ -41,11 +42,14 @@ void digitalWrite(uint8_t pin, uint8_t val)
 	SREG = oldSREG;
 }
 ```
-The above code does a read-modify-write, which is why it must disable interrupts while updating the output. SREG is the AVR's Status Register which contains the 'Global Interrupt Enable' bit. It first saves the SREG register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;` afterwards. This is good, because it leaves the interrupt state in the same state it was in before, either enabled or disabled. 
 
-If you used `sti()` or `interrupts()` instead of `SREG = oldSREG;` then it would enable interrupts as a side-effect. This is very bad if you want them to remain disabled, and can be fatal in an interrupt handler which expects interrupts to be disabled until it returns.
+### Disabling Interrupts
 
-The problem with read-modify-write is that an interrupt might occur _between_ the read and the write which changes the register that was just read, and the subsequent write will cause those changes to be overwritten. 
+The above code also does a read-modify-write, which is why it must disable interrupts while updating the output register. SREG is the AVR's 'Status Register' which contains the 'Global Interrupt Enable' bit. It first saves the SREG register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;` afterwards. This is good, because it leaves the interrupt state in the same state it was in before, either enabled or disabled. 
+
+If you were to use `sti()` or `interrupts()` instead of `SREG = oldSREG;` then it would enable interrupts as a side-effect. This is _very bad_ if you want them to remain disabled, and can be fatal in an interrupt handler which expects interrupts to be disabled until it returns.
+
+The problem with read-modify-write is that an interrupt might occur _between_ the read and the write which changes the register that was just read, and the subsequent write will cause those changes to be overwritten and lost (a very nasty intermittent bug).
 
 This is also a problem with the `toggle()` methods. The `toggle()` methods in this library have patched-out code to prevent this happening. You don't need this code if you _know_ that the output is _never_ modified by an interrupt, which is why it is patched out. Disabling/enabling interrupts also slows it down, so there's no point in doing it if you don't need it.
 
@@ -53,28 +57,39 @@ Some MCUs, like the SAMD, have special registers where you can write just one bi
 
 
 
-TODO add nointerrupts and restoreinterrupts?
+TODO add noInterrupts and restoreInterrupts?
+
 
 ## Timing Comparisons
 
-This table compares the standard `digitalRead()` and `digitWrite()` calls with the FastGPIO methods for some MCU types and some different clock speeds. You can see it makes a huge difference. This effect is accumulative if you are doing something intensive like "bit-banging" multiple bits into a shift register.
+This table compares the standard `digitalRead()` and `digitWrite()` calls with the OptimizedGPIO methods for some MCU types and some different clock speeds. You can see it makes a huge difference. This effect is accumulative if you are doing something intensive like "bit-banging" multiple bits into a shift register.
 
-IO read/write timing
+Timing for digital read/write
 
-| Method           | STM32 xMHz | SAMD21 xMHz | SAMD51 xMHz | ATxxx xMHz | ESP32 xMHz | 
-| :---------       | :--------- | :---------  | :---------  | :--------- | :--------- |
-| digitalRead()    |            |             |             |            |            |
-| FastGPIO.read()  |            |             |             |            |            |
-| digitalWrite()   |            |             |             |            |            |
-| FastGPIO.write() |            |             |             |            |            |
+| Method                | STM32 xMHz | SAMD21 xMHz | SAMD51 xMHz | ATxxx xMHz | ESP32 xMHz | 
+| :---------            | :--------- | :---------  | :---------  | :--------- | :--------- |
+| digitalRead()         |            |             |             |            |            |
+| OptimizedGPIO.read()  |            |             |             |            |            |
+| digitalWrite()        |            |             |             |            |            |
+| OptimizedGPIO.write() |            |             |             |            |            |
 
 
-Bit-banging a shift register timing
+Timing for bit-banging a shift register
 
 TODO
 
 
 ## Using the Library
+
+TODO
+
+
+
+
+## OptimizedGPIO API (Application Programming Interface)
+
+The API is the same for every MCU type. This means you can use the same code in every project. The code uses `#ifdef` to select which code is going to be used, according to the MCU type.
+
 
 TODO
 
@@ -353,17 +368,25 @@ public:
 </details>
 
 
-## Using FastGPIO to bit-bang a serial shift register
+## Using OptimizedGPIO to bit-bang a serial shift register
 
-This is a nice application for FastGPIO and it makes huge difference.
+This is a nice application for OptmizedGPIO, and it makes huge difference.
 
 The cheapest way to extend the number of outputs of your MCU is to add a 'serial shift register' chip. This is a 'serial in parallel out' chip which lets you clock in bits serially, then transfer them to an 8 or 16-bit output register.
 
-You need 3 outputs to write to it, DATA, CLOCK and STROBE (although they may have different names). CLOCK clocks in a DATA bit on its rising edge. After 8 or 16 bits have been clocked in, STROBE transfers the data to the outputs.
+This is also _very fast_ when compared to an SPI or I2C I/O Expander like the Microchip MCP23017.
 
-There are several versions of this chip, such as 74HC595, CD4095, ...
+You need 3 outputs to write to it, DATA, CLOCK and STROBE (although the chip's pins may have different names). CLOCK clocks in a DATA bit on its rising edge. After 8 or 16 bits have been clocked in, STROBE transfers the data to the outputs.
+
+There are several versions of this chip, such as 74HC595, CD4095, 74LS674...
+
+https://www.ti.com/lit/ds/symlink/sn74ls674.pdf
+
+These chips can also be chained together, to get 16, 24 or 32 bits, or even more if you need it!
 
 TODO chip details
+
+TODO wiring diagram
 
 TODO source code
 
