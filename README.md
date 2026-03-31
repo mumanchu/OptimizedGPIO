@@ -1,8 +1,10 @@
 # OptimizedGPIO
 
-This fast General-Purpose Input/Output (GPIO) library is a single include file `OptimizedGPIO.h` that provides top speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are need if you change board type.
+This fast General-Purpose Input/Output (GPIO) library is a single include file `OptimizedGPIO.h` that provides top speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed if you change board type.
 
-This voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know this stuff already.
+This library was originally developed part of a Stepper Motor library, which will be released ~~soon~~ eventually.
+
+The voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know this stuff already.
 
 _Joke of the week: "His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
 
@@ -15,7 +17,7 @@ _Joke of the week: "His software had more bugs in it than the Amazon Rainforest"
 
 The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast OptimizedGPIO versions are typically 10 times faster.
 
-The reason for this is that a lot of work is done for each access which could be done in a `begin()` method. This would save a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
+The reason for this is that a lot of work is done for each access which could be done in a `begin()` method. This saves a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
 
 Below is the Arduino code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
 
@@ -60,7 +62,7 @@ C:\Users\<user-name>\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.7
 
 ### `set()` and `reset()` methods
 
-To make it even faster, instead of using a single `write()` method, it has separate `set()` and `reset()` methods to replace `digitalWrite(pin, 1)` and `digitalWrite(pin, 0)`. This just means that it doesn't have to do a check for `1` or `0` every time, which saves a bit of time. If you need it, there is a `write(bool b)` method too, but this just calls set and reset after checking `b`, `void write(bool b) { b ? set() : reset(); }`. You can modify the example project to see what effect this has on the speed - it's noticeable.
+To make it even faster, instead of using a single `write()` method, it has separate `set()` and `reset()` methods to replace `digitalWrite(pin, 1)` and `digitalWrite(pin, 0)`. This just means that it doesn't have to do a check for `1` or `0` every time (`if (val == LOW` in the code above), which saves a bit of time. If you need it, there is a `write(bool b)` method too, but this just calls set and reset after checking `b`, `void write(bool b) { b ? set() : reset(); }`. You can modify the example project to see what effect this has on the speed - it's noticeable.
 
 
 <!-- ================================================================================ -->
@@ -73,7 +75,9 @@ To make it even faster, instead of using a single `write()` method, it has separ
 1. Install the library using the Arduino Library Manager, or download the ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". 
 https://github.com/mumanchu/OptimizedGPIO
 
-As a first step you could open the `OptimizedGPIOExample1.ino` sketch from "File / Examples > Examples from Custom Libraries". Or create your own sketch and...
+As a first step you could open the `OptimizedGPIOExample1.ino` sketch from "File / Examples > Examples from Custom Libraries". 
+
+Or create your own sketch and...
 
 2. Include the file `OptimizedGPIO.h`. The right code for your MCU is automatically selected by the `$ifdef` statements in the include file. 
 ```cpp
@@ -103,7 +107,7 @@ void setup() {
 ```
 
 > [!WARNING]
-> If you see the warning message `#warning Unknown microcontroller, needs OptimizedGPIO class` when you build the program, it means that your MCU is not supported by the library, and the default (slow) `digitalRead()` and `digitalWrite()` functions will be used. It could also mean that the `#define` symbol used to select the MCU has not been #defined. The library uses a single symbol to select the architecture, and these symbols have not been standardised on the Arduino platform. _If you get this warning, please email us on `info@muman.ch` with the details of your board, and we'll fix it for the next release._
+> If you see the warning message `#warning Unknown microcontroller, needs OptimizedGPIO class` when you build the program, it means that your MCU is not supported by the library, and the default (slow) `digitalRead()` and `digitalWrite()` functions will be used. It could also mean that the `#define` symbol used to select the MCU has not been defined. The library uses a single symbol to select the architecture, and these symbols have not been standardised on the Arduino platform. _If you get this warning, please email us on `info@muman.ch` with the details of your board, and we'll fix it for the next release._
 
 
 <!-- ================================================================================ -->
@@ -167,7 +171,6 @@ You can see the timing results below. Try it with your own board and see what yo
 
 #include "OptimizedGPIO.h"
 
-
 // The pins to be used for testing
 #define TEST_OUTPUT_PIN LED_BUILTIN
 #define TEST_INPUT_PIN 2
@@ -176,7 +179,6 @@ OptimizedGPIO testInputPin;
 
 // The number of times around the timing loop
 #define LOOP_COUNT 100000
-
 
 void setup() 
 {
@@ -192,7 +194,6 @@ void setup()
 	testOutputPin.begin(TEST_OUTPUT_PIN, OUTPUT);
 	testInputPin.begin(TEST_INPUT_PIN, INPUT);
 }
-
 
 void loop() 
 {
@@ -288,7 +289,7 @@ Timing for 100'000 digital read/write operations, in milliseconds. The empty loo
 
 > [!NOTE]
 > The Arduino GIGA is the fastest board at 480MHz. But it is a two-core MCU, so it has extra code to handle conflicts if both processors try to access the same GPIO register. This seems to slow it down quite a lot.\
-> The second fastest board is the Adafruit Metro M4 (SAMD51). At 120MHz it is faster than the 240MHz ESP32's, especially for `set()` and `reset()`. This is because the SAMD's GPIOs are far more efficient, using the `OUTSET` and `OUTCLR` registers to set or clear a single bit.
+> The second fastest board is the Adafruit Metro M4 (SAMD51). At 120MHz it is faster than the 240MHz ESP32's, especially for `set()` and `reset()`. This is because the SAMD's GPIOs are far more efficient, using the `OUTSET` and `OUTCLR` registers to set or clear a single bit, so there's no need for read-modify-write.
 
 <!-- ================================================================================ -->
 
