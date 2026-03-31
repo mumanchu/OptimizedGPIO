@@ -1,13 +1,25 @@
 # OptimizedGPIO
 
-This fast General-Purpose Input/Output (GPIO) library is a single include file `OptimizedGPIO.h` that provides top speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed if you change board type.
+This fast General-Purpose Input/Output (GPIO) library is a single include file `OptimizedGPIO.h` that provides top speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed if you change the board type.
 
-This library was originally developed part of a Stepper Motor library, which will be released -soon- eventually.
+This library was originally developed as part of a cross-platform Stepper Motor library, which will be released -soon- eventually.
 
 The voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know this stuff already.
 
-_Joke of the week: "His software had more bugs in it than the Amazon Rainforest"._ (Not referring to me, of course.)
+_Joke of the Week: "His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
 
+<!-- ================================================================================ -->
+
+## Contents
+
+- [Why do we need faster I/O?](#why-do-we-need-it)
+- [Using the Library](#using-the-library)
+- [OptimizedGPIO API](#api)
+- [Example Sketch](#example-sketch)
+- [Timing Comparisons](#timing-comparisons)
+- [Disabling Interrupts](#disabling-interrupts)
+- [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging)
+<br/>
 
 <!-- ================================================================================ -->
 
@@ -15,13 +27,13 @@ _Joke of the week: "His software had more bugs in it than the Amazon Rainforest"
 
 ## Why do we need faster I/O?
 
-The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast OptimizedGPIO versions are typically 10 times faster.
+The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast OptimizedGPIO versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
 
-The reason for this is that a lot of work is done for each access which could be done in a `begin()` method. This saves a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
+The reason for this is that a lot of work is done for each access which could be done just once in a `begin()` method. This saves a lot of time when the program is running. Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
 
-Below is the Arduino code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
+Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
 
-The standard libraries don't do this because calling `begin()` for each I/O you want to use makes it more complicated and prone to errors. For this library you must create an object for each pin, and call its `begin()` method. See [Using the Library](#using-the-library) for details.
+The standard libraries don't do this because calling `begin()` for each I/O you want to use makes it more complicated, and removing runtime error checks is dangerous. For this library you must create an object for each pin, and call its `begin()` method. See [Using the Library](#using-the-library) for details.
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
@@ -288,7 +300,7 @@ Timing for 100'000 digital read/write operations, in milliseconds. The empty loo
 
 > [!NOTE]
 > The Arduino GIGA is the fastest board at 480MHz. But it is a two-core MCU, so it has extra code to handle conflicts if both processors try to access the same GPIO register. This is what slows down the `set()` method. \
-> The second fastest board is the Adafruit Metro M4 (SAMD51). At 120MHz it is faster than the 240MHz ESP32's, especially for `set()` and `reset()`. This is because the SAMD's GPIOs are far more efficient, using the `OUTSET` and `OUTCLR` registers to set or clear a single bit, so there's no need for read-modify-write or disabling/enabling interrupts.
+> The second fastest board is the Adafruit Metro M4 (SAMD51). At 120MHz its GPIOs are faster than the 240MHz ESP32's, especially for `set()` and `reset()`. This is because the SAMD's GPIOs are far more efficient, using the `OUTSET` and `OUTCLR` registers to set or clear a single bit, so there's no need for read-modify-write or disabling/enabling interrupts.
 
 <!-- ================================================================================ -->
 
@@ -296,16 +308,18 @@ Timing for 100'000 digital read/write operations, in milliseconds. The empty loo
 
 ### Disabling Interrupts
 
-If the code does a read-modify-write, then it _must_ disable interrupts while updating the output register. In the AVR `digitalWrite()` code at the start of this article, SREG is the AVR's 'Status Register' which contains the 'Global Interrupt Enable' bit. It first saves the SREG register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;` afterwards. This is good, because it leaves the interrupt state in the same state it was in before, either enabled or disabled. 
-
-If you were to use `sti()` or `interrupts()` instead of `SREG = oldSREG;` then it would enable interrupts as a side-effect. This is _very bad_ if you want them to remain disabled, and can be fatal in an interrupt handler which expects interrupts to be disabled until it returns.
+If the code does a read-modify-write, then it must disable interrupts while updating the output register, but _only_ if another interrupt can modify the same output register. 
 
 The problem with read-modify-write is that an interrupt might occur _between_ the read and the write which changes the register that was just read, and the subsequent write will cause those changes to be overwritten and lost. _This is a common and very nasty intermittent bug._
+
+In the AVR `digitalWrite()` code at the start of this article, `SREG` is the AVR's 'Status Register' which contains the 'Global Interrupt Enable' bit. It first saves the `SREG` register with `uint8_t oldSREG = SREG;`, clears the bit (disables interrupts) with `cli()` (same as `noInterrupts()`), then restores the global interrupt state with `SREG = oldSREG;` afterwards. This is perfect, because it leaves the interrupt state in _the same state_ it was in before it was disabled, either enabled or disabled. 
+
+If you were to use `sti()` or `interrupts()` instead of `SREG = oldSREG;` then it would enable interrupts as a side-effect. This is _very bad_ if you want them to remain disabled, and this can be fatal in an interrupt handler which expects interrupts to be disabled until it returns.
 
 Some MCUs, like the SAMD, have special registers where you can write just one bit to set or clear a digital output, e.g. OUTSET and OUTCLR. This is great because it does not need a dangerous (and slow) read-modify-write operation to set an output, and you don't need to disable interrupts.
 
 > [!CAUTION]
-> The `toggle()` methods in this library do read-modify-write, and they don't disable/enable interrupts. Some of them have patched-out code to prevent this happening. But you don't need to disable/enable interrupts if you _know_ that the output is _never_ modified by an interrupt. Disabling/enabling interrupts also slows it down, so there's no point in doing it if you don't need it.
+> The `toggle()` methods in this library do read-modify-write, but they _do not_ disable/enable interrupts. Some of them have patched-out code to do this. But you don't need to disable/enable interrupts if you _know_ that the output is _never_ modified by an interrupt. Disabling/enabling interrupts slows it down, so there's no point in doing it if you don't need it.
 
 
 <!-- ================================================================================ -->
