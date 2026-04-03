@@ -92,7 +92,7 @@ To make it even faster, instead of using a single `write()` method, it has separ
 
 1. Install the library using the Arduino Library Manager, or download the ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". https://github.com/mumanchu/OptimizedGPIO
 
-As a first step you could open the `OptimizedGPIO.ino` sketch from "File / Examples > Examples from Custom Libraries". 
+As a first step you could open the `OptimizedGPIO.ino` sketch from "File / Examples > Examples from Custom Libraries / OptimizedGPIO". 
 
 Or create your own sketch and...
 
@@ -122,6 +122,8 @@ void setup() {
 	stepPin.reset();	// pin := 0
 	bool b = inputPin.read();
 ```
+
+There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift regiater, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
 
 > [!WARNING]
 > If you see the warning message `#warning Unknown microcontroller, needs OptimizedGPIO class` when you build the program, it means that your MCU is not supported by the library, and the default (slow) `digitalRead()` and `digitalWrite()` functions will be used. It could also mean that the `#define` symbol used to select the MCU has not been defined. The OptimizedGPIO library uses a single symbol to select the architecture, and these symbols have not been standardised on the Arduino platform. _If you get this warning, please email us on `info@muman.ch` with the details of your board, and we'll fix it for the next release._
@@ -169,9 +171,13 @@ An inline 'getter' method (a concept from C#) that returns the `pin` number. Ano
 
 ## Example Sketch
 
-The example sketch `OptimizedGPIO.ino` outputs the time in microseconds for 100000 iterations of `digitalRead()` and `digitalWrite()`, along with the times for the `OptimizedGPIO` versions, `read()` and `set()`.
+The example sketch `OptimizedGPIO.ino` writes to `Serial` the times in microseconds for 100000 iterations of `digitalRead()` and `digitalWrite()`, along with the times for the `OptimizedGPIO` versions, `read()` and `set()`.
 
-You can see the timing comparisons below. Try it with your own board and see what you get.
+It can also show the timings for `digitalReadFast()` and `digitalWriteFast()`, but these functions are not present on all platforms. Enable these with the `#if`.
+
+To see the ouput, open 'Serial Monitor' and set the baud rate to 115200.
+
+You can see the timing comparisons below (converted to milliseconds). Try it with your own board and see what you get.
 
 https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OptimizedGPIO/OptimizedGPIO.ino
 
