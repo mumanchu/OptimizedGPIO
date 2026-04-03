@@ -297,6 +297,9 @@ The source code for the example is here:
 https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OutputExpander8/OutputExpander8.ino
 
 
+![Schematic of Arduino connections to 74HC595 Serial Shift Register](https://github.com/mumanchu/OptimizedGPIO/blob/main/images/shift-register-8.png)
+
+
 <!-- ================================================================================ -->
 
 <a name="reference-links"></a>
