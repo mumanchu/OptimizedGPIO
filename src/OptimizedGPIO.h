@@ -38,12 +38,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return (port->IDR & mask) != 0; }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set() { port->BSRR = mask; }
 	void reset() { port->BSRR = mask << 16; }
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -80,12 +79,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return (port->IN.reg & mask) != 0; }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set() { port->OUTSET.reg = mask; }
 	void reset() { port->OUTCLR.reg = mask; }
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -123,12 +121,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return REG_GET_BIT(in_reg, mask) != 0; }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set() { REG_WRITE(ts_reg, mask); }
 	void reset() { REG_WRITE(tc_reg, mask); }
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -177,12 +174,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return (GPI & mask) != 0; }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set() { GPOS = mask; }
 	void reset() { GPOC = mask; };
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -219,12 +215,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return (*inreg & mask) != 0; }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set();
 	void reset();
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -280,12 +275,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return gpio->read(); }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { gpio->write(b); }
 	void set() { gpio->write(1); }
 	void reset() { gpio->write(0); }
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
@@ -321,12 +315,11 @@ class OptimizedGPIO
 public:
 	bool begin(uint pin, uint mode);
 	bool read() { return digitalRead(pin); }
-	uint getPin() { return pin; }
-	// do not use these with INPUT pins!
 	void write(bool b) { b ? set() : reset(); }
 	void set() { digitalWrite(pin, 1); }
 	void reset() { digitalWrite(pin, 0); }
 	void toggle();
+	uint getPin() { return pin; }
 };
 
 bool OptimizedGPIO::begin(uint pin, uint mode)
