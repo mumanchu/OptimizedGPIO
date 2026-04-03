@@ -192,9 +192,6 @@ These are the timings I got from runnning the Example Sketch on several differen
 
 The timings are for 100'000 read/write operations, in milliseconds. The empty loop time is already subtracted from the values, but it's shown to give an impression of the MCU's speed.
 
-The program was built with "Default Optimization". Compiler optimization affects the results. 
-
-
 |                       | At328P AVR 16MHz| At2560 AVR 16MHz  | SAMD21 48MHz | SAMD51 120MHz     | ESP32 240MHz   | ESP32S3 240MHz | ESP32S3 240MHz    |
 | :---------            | ---------:      | ---------:        | ---------:   | ---------:        | -----------:   | ---------:     | ---------:        |
 | Board                 | Arduino Uno R3  | Arduino Mega 2560 | Arduino Zero | Adafruit Metro M4 | ESP32-WROOM-32 | ESP32 Mini     | Seeed Studio XIAO |
@@ -214,6 +211,8 @@ The program was built with "Default Optimization". Compiler optimization affects
 | OptimizedGPIO.read()  | 20.34            | 3.92             | 3.57            | 16.25         |
 | OptimizedGPIO.set()   | 21.90            | 3.92             | 8.18            | 10.00         |
 
+The program was built with "Default Optimization". Compiler optimization affects the results. 
+
 
 > [!NOTE]
 > The Arduino GIGA is the fastest board at 480MHz. But it is a two-core MCU, so it has extra code to handle conflicts if both processors try to access the same GPIO output register. This is why the `set()` method is so slow. \
@@ -232,7 +231,7 @@ You may find that you already have `digitalReadFast()` and `digitalWriteFast()` 
 
 There is also a `pinModeFast()` which may be useful if you want to quicky switch a pin between input and output modes. Note that `pinMode()` and `pinModeFast()`should _never_ be used after calling `OptimizedGPIO.begin()` for the same pin, because the OptimizedGPIO methods may not work after that.
 
-These 'fast' functions cut out some of the overhead, but not all. They are about 2x faster than the standard functions, but nowhere near as fast as `OptimizedGPIO`. Here are the timing comparisons for the STM32F103RB Nucleo-64 (72MHz).
+These 'fast' functions cut out some of the overhead, but not all. They are about 2x faster than the standard functions, but nowhere near as fast as `OptimizedGPIO`. Here are the timing comparisons for the STM32F103RB Nucleo-64 (72MHz). Times are in milliseconds for 100000 iterations.
 
 |                       | STM32F103RB 72MHz |
 | :---------            | ---------:        |
