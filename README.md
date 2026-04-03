@@ -1,12 +1,15 @@
-# OptimizedGPIO
+﻿# OptimizedGPIO
 
 This fast General-Purpose Input/Output (GPIO) library uses a single include file `OptimizedGPIO.h` to provide top-speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed to your code if you change the board type.
 
-This library was originally developed as part of a cross-platform Stepper Motor library, which will be released ~~soon~~ eventually.
-
 The voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know this stuff already.
 
-_Joke of the Week: "His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
+This library was originally developed as part of a cross-platform Stepper Motor library, which will be released ~~soon~~ eventually.
+
+Joke of the Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
+
+> [!NOTE]
+> This library works only for digital I/O. Do not use it for analog or PWM outputs.
 
 
 <!-- ================================================================================ -->
@@ -28,17 +31,15 @@ _Joke of the Week: "His software had more bugs in it than the Amazon Rainforest"
 
 <a name="why-do-we-need-it"></a>
 
-## Why do we need faster I/O?
+## Why do we need optimized GPIO?
 
-The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast OptimizedGPIO versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
+The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast `OptimizedGPIO` versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
 
-The reason for this is that a lot of work and validation is done for every access which could be done _just once_ in a `begin()` method. This saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then acessing the I/O will have "unexpected" results. 
+This is because `digitalRead()` and `digitalWrite()` do a lot of work and validation for every access. This could be done _just once_ in a `begin()` method, which saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then acessing the I/O will have "unexpected" results. So for this library you must create an object for each pin and call its `begin()` method. See [Using the Library](#using-the-library) for details.
 
-Fast IO is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
+Faster I/O is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
 
 Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
-
-For this library you must create an object for each pin and call its `begin()` method. See [Using the Library](#using-the-library) for details.
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
@@ -175,36 +176,38 @@ You can see the timing comparisons below. Try it with your own board and see wha
 https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OptimizedGPIO/OptimizedGPIO.ino
 
 
+<!-- ================================================================================ -->
+
 <a name="timing-comparisons"></a>
 
-### Timing Comparisons
-In the example sketch, the speed of each method is computed using a loop which runs the method (say) 100000 times. The looping itself takes a lot of time, so you have to remove that overhead from the measurement. The over-efficient code optimizer may also 'optimize out' your loop, that's why the loop variable is `volatile`. The Example Sketch shows the solution.
+## Timing Comparisons
+In the example sketch, the speed of each method is computed using a loop which runs the method 100000 times. The looping itself takes a lot of time, so that overhead must be removed from the measurement. The very efficient code optimizer may also 'optimize out' the loop, that's why the loop variable is `volatile`.
 
 These are the timings I got from runnning the Example Sketch on several different boards. The table compares the standard `digitalRead()` and `digitWrite()` calls with the `OptimizedGPIO.read()` and `OptimizedGPIO.set()` methods for each board. You can see it makes a huge difference. This effect is accumulative if you are doing something intensive like "bit-banging" multiple bits into (or outof) a shift register.
 
-Timing for 100'000 digital read/write operations, in milliseconds. The empty loop time is already subtracted from the test loop time, but it's shown for comparison.
+The timings are for 100'000 read/write operations, in milliseconds. The empty loop time is already subtracted from the values, but it's shown to give an impression of the MCU's speed.
 
-The program was built with "Default Optimization". Compiler optimizations will affect the results.
+The program was built with "Default Optimization". Compiler optimization affects the results, even when using `volatile`. 
 
 
 |                       | At328P AVR 16MHz| At2560 AVR 16MHz  | SAMD21 48MHz | SAMD51 120MHz     | ESP32 240MHz   | ESP32S3 240MHz | ESP32S3 240MHz    |
 | :---------            | ---------:      | ---------:        | ---------:   | ---------:        | -----------:   | ---------:     | ---------:        |
 | Board                 | Arduino Uno R3  | Arduino Mega 2560 | Arduino Zero | Adafruit Metro M4 | ESP32-WROOM-32 | ESP32 Mini     | Seeed Studio XIAO |
-| Empty loop time       | 295.51          | 295.55            | 22.96        | 10.02             | 8.37           | 8.88           | 66.98              |
-| digitalRead()         | 201.45          | 459.29            | 106.65       | 24.20             | 19.70          | 38.99          | 39.81             |
-| digitalWrite()        | 239.18          | 471.88            | 156.77       | 40.90             | 31.45          | 52.41          | 51.10             |
-| OptimizedGPIO.read()  | 12.83           | 12.85             | 12.71        | 5.84              | 5.87           | 3.84           | 7.13              |
-| OptimizedGPIO.set()   | 88.28           | 69.45             | 8.55         | 4.17              | 6.28           | 5.09           | 4.12              |
+| Empty loop time       | 301.80          | 295.55            | 33.40        | 10.02             | 8.37           | 8.88           | 66.98             |
+| digitalRead()         | 333.22          | 459.29            | 135.69       | 24.20             | 19.70          | 38.99          | 39.81             |
+| digitalWrite()        | 314.36          | 471.88            | 167.00       | 40.90             | 31.45          | 52.41          | 51.10             |
+| OptimizedGPIO.read()  | 18.86           | 12.85             | 22.96        | 5.84              | 5.87           | 3.84           | 7.13              |
+| OptimizedGPIO.set()   | 81.73           | 69.45             | 22.96        | 4.17              | 6.28           | 5.09           | 4.12              |
 
 
 |                       | STM32F103RB 72MHz|STM32F446RE 180MHz| STM32H747 480MHz| ESP8266 80MHz |
 | :---------            | ---------:       | ---------:       | ----------:     | -----------:  |
 | Board                 | Nucleo-64        | Nucleo-64        | Arduino GIGA R1 | LOLIN D1 Mini |
 | Empty loop time       | 25.04            | 7.78             | 1.05            | 16.25         |
-| digitalRead()         | 155.01           | 28.93            | 11.68           | 58.75         |
-| digitalWrite()        | 187.86           | 33.38            | 12.83           | 157.51        |
-| OptimizedGPIO.read()  | 25.15            | 3.92             | 3.57            | 21.25         |
-| OptimizedGPIO.set()   | 22.01            | 3.92             | 8.18            | 13.75         |
+| digitalRead()         | 154.90           | 28.93            | 11.68           | 58.75         |
+| digitalWrite()        | 187.86           | 33.38            | 12.83           | 156.25        |
+| OptimizedGPIO.read()  | 20.34            | 3.92             | 3.57            | 16.25         |
+| OptimizedGPIO.set()   | 21.90            | 3.92             | 8.18            | 10.00         |
 
 
 > [!NOTE]
@@ -220,7 +223,7 @@ The program was built with "Default Optimization". Compiler optimizations will a
 
 ## Existing digitalReadFast() and digitalWriteFast() functions (if present)
 
-You may find that you already have `digitalReadFast()` and `digitalWriteFast()` functions, but not all architectures have implemented them. 
+You may find that you already have `digitalReadFast()` and `digitalWriteFast()` functions, but these are not implemented on all platforms. 
 
 There is also a `pinModeFast()` which may be useful if you want to quicky switch a pin between input and output modes. Note that `pinMode()` and `pinModeFast()`should _never_ be used after calling `OptimizedGPIO.begin()` for the same pin, because the OptimizedGPIO methods may not work after that.
 
@@ -281,9 +284,9 @@ Most of these 8-bit chips can be chained together to get 16, 24 or 32 bits, or e
 To expand the number _inputs_, you can do the reverse with a 'parallel-in-serial-out' chip like the 74HC165, 74HC166 and the CMOS CD4014B. But that's for your homework.
 
 **Here's the timing for the shift-register Output Expander** \
-Writing a byte using an I2C expander at 1MHz = 180uS \
-Writing a byte using digitalWrite() = 31uS \
-Writing a byte using OptimizedGPIO = 3uS !
+Writing a byte using an I2C expander at 1MHz = **180uS** \
+Writing a byte using digitalWrite() = **31uS** \
+Writing a byte using OptimizedGPIO = **3uS** !
 
 The source code for the example is here:
 https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OutputExpander8/OutputExpander8.ino
@@ -303,8 +306,8 @@ https://muman.ch/muman/index.htm?muman-matts-blog.htm
 https://www.ti.com/lit/ds/symlink/sn74hc595.pdf
 
 **Visual Micro extension for Microsoft Visual Studio** \
-I use this for all my Arduino-style projects \
-_"Compile and upload any Arduino project to any board, using the same Arduino platform and libraries, with all the advantages of the advanced Microsoft Visual Studio IDE"_ \
+I use this for all my Arduino-style projects. \
+_"Compile and upload any Arduino project to any board, using the same Arduino platform and libraries, with all the advantages of the advanced Microsoft Visual Studio IDE."_ \
 https://www.visualmicro.com/
 
 <!-- ================================================================================ -->
