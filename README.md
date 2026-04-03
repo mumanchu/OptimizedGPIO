@@ -31,13 +31,13 @@ This library was originally developed as part of a cross-platform Stepper Motor 
 
 ## Why do we need optimized GPIO?
 
-The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that only accesses the microcontroller's GPIO registers. The fast `OptimizedGPIO` versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
+The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that accesses the microcontroller's GPIO registers directly. The fast `OptimizedGPIO` versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
 
-This is because `digitalRead()` and `digitalWrite()` do a lot of work and validation for every access. This could be done _just once_ in a `begin()` method, which saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then acessing the I/O will have "unexpected" results. So for this library you must create an object for each pin and call its `begin()` method. See [Using the Library](#using-the-library) for details.
+This is because `digitalRead()` and `digitalWrite()` do a lot of work and validation for every access. This could be done _just once_ in a `begin()` method, which saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then acessing the I/O will have "unexpected" results. So for this library you must create an object for each pin and call its `begin()` method and check its return value. See [Using the Library](#using-the-library) for details.
 
 Faster I/O is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
 
-Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
+Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not being used as a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
@@ -71,7 +71,7 @@ void digitalWrite(uint8_t pin, uint8_t val)
 ```
 See the note about [Disabling Interrupts](#disabling-interrupts) to find out about `SREG`.
 
-You can find the Arduino code for digital I/O in the Arduino "packages" subdirectory for the MCU, in a file called `wiring_digital.c`, usually in a subdirectory of `cores`. This file is where most of the code for this library originated. For example, you will find the AVR code here (the version number may be different):
+You can find the Arduino code for digital I/O in the Arduino "packages" subdirectory for the MCU, in a file called `wiring_digital.c`, usually in a subdirectory of `cores`. This file is where most of the code for this library originated. It is different for every platform and board. For example, you will find the AVR code here (the version number may be different):
 ```
 C:\Users\<user-name>\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.7\cores\arduino\wiring_digital.c
 ```
@@ -88,7 +88,7 @@ To make it even faster, instead of using a single `write()` method, it has separ
 
 ## Using the Library
 
-1. Install the library using the Arduino Library Manager, or download the ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". https://github.com/mumanchu/OptimizedGPIO
+1. Install the library using the Arduino Library Manager, or download the latest ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". https://github.com/mumanchu/OptimizedGPIO
 
 As a first step you could open the `OptimizedGPIO.ino` sketch from "File / Examples > Examples from Custom Libraries / OptimizedGPIO". 
 
@@ -186,13 +186,13 @@ There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-
 <a name="timing-comparisons"></a>
 
 ## Timing Comparisons
-In the example sketch, the speed of each method is computed using a loop which runs the method 100000 times. The looping itself takes a lot of time, so that overhead must be removed from the measurement. The very efficient code optimizer may also 'optimize out' the loop, that's why the loop variable is `volatile`.
+In the example sketch, the speed of each method is computed using a loop which runs the method 100000 times. The looping itself takes a lot of time, so that overhead must be removed from the measurement.
 
 These are the timings I got from runnning the Example Sketch on several different boards. The table compares the standard `digitalRead()` and `digitWrite()` calls with the `OptimizedGPIO.read()` and `OptimizedGPIO.set()` methods for each board. You can see it makes a huge difference. This effect is accumulative if you are doing something intensive like "bit-banging" multiple bits into (or outof) a shift register.
 
 The timings are for 100'000 read/write operations, in milliseconds. The empty loop time is already subtracted from the values, but it's shown to give an impression of the MCU's speed.
 
-The program was built with "Default Optimization". Compiler optimization affects the results, even when using `volatile`. 
+The program was built with "Default Optimization". Compiler optimization affects the results. 
 
 
 |                       | At328P AVR 16MHz| At2560 AVR 16MHz  | SAMD21 48MHz | SAMD51 120MHz     | ESP32 240MHz   | ESP32S3 240MHz | ESP32S3 240MHz    |
