@@ -1,7 +1,14 @@
-////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 // OptimizedGPIO Library Example
 // 
-// mumanchu + muman.ch, 2026.03.31
+// This example outputs GPIO timings to Serial, comparing the execution 
+// times of digitalRead(), digitalWite(), OptimisedGPIO.read() and 
+// OptimizedGPIO.set(). The timings are in microseconds for 100000 calls.
+// It can also show the timings for digitalReadFast() and digitalWriteFast().
+// 
+// Open the 'Serial Monitor' at 115200 baud to see the output.
+// 
+// mumanchu + muman.ch, 2026.04.03
 // https://github.com/mumanchu/OptimizedGPIO
 
 #include "OptimizedGPIO.h"
@@ -23,7 +30,7 @@ void setup()
 	Serial.begin(115200);
 
 	// delay to give you time to open the serial monitor
-	delay(3000);
+	delay(5000);
 
 	Serial.println("\n\rStarted...\n\r");
 	Serial.flush();

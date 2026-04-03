@@ -1,4 +1,4 @@
-# OptimizedGPIO
+﻿# OptimizedGPIO
 
 This fast General-Purpose Input/Output (GPIO) library uses a single include file `OptimizedGPIO.h` to provide top-speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed to your code if you change the board type.
 

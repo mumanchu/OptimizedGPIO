@@ -28,7 +28,7 @@ void setup()
 	Serial.begin(115200);
 
 	// delay to give you time to open the serial monitor
-	delay(3000);
+	delay(5000);
 
 	Serial.println("\n\rStarted...\n\r");
 	Serial.flush();
