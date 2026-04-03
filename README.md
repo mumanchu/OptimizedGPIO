@@ -14,7 +14,7 @@ This library was originally developed as part of a cross-platform Stepper Motor 
 
 ## Contents
 
-- [Why do we need faster I/O?](#why-do-we-need-it)
+- [Why do we need optimized I/O?](#why-do-we-need-it)
 - [Using the Library](#using-the-library)
 - [The OptimizedGPIO API](#api)
 - [Example Sketch](#example-sketch)
@@ -29,7 +29,7 @@ This library was originally developed as part of a cross-platform Stepper Motor 
 
 <a name="why-do-we-need-it"></a>
 
-## Why do we need optimized GPIO?
+## Why do we need optimized I/O?
 
 The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that accesses the microcontroller's GPIO registers directly. The fast `OptimizedGPIO` versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
 
@@ -146,10 +146,10 @@ Use this instead of `digitalRead()`.
 Sets the output to 1 (high). Use this instead of `digitalWrite(pin, 1)`.
 
 **`void reset();`** \
-Sets the output to 0 (low). Use this instead of `digitalWrite(pin, 1)`.
+Sets the output to 0 (low). Use this instead of `digitalWrite(pin, 0)`.
 
 **`void write(bool b);`** \
-Writes a `1` or a `0` to the output pin. It's (slightly) faster to use `set()` and `reset()`.
+Writes a `1` or a `0` to the output pin.
 
 **`void toggle();`** \
 This inverts the state of an output, using a read-modify-write sequence. This has to disable interrupts during the read-modify-write sequence to prevent an interrupt handler changing the register in between. It _should_ only re-enable them again afterwards if they were enabled before, but that's not always possible. See [Disabling Interrupts](#disabling-interrupts).
@@ -171,7 +171,7 @@ An inline 'getter' method (a concept from C#) that returns the `pin` number. Ano
 
 The example sketch `OptimizedGPIO.ino` writes to `Serial` the times in microseconds for 100000 iterations of `digitalRead()` and `digitalWrite()`, along with the times for the `OptimizedGPIO` versions, `read()` and `set()`.
 
-It can also show the timings for `digitalReadFast()` and `digitalWriteFast()`, but these functions are not present on all platforms. Enable these with the `#if`.
+It can also show the timings for `digitalReadFast()` and `digitalWriteFast()`, but these functions are not present on all platforms. Enable these with the `#if` statement.
 
 To see the output, open 'Serial Monitor' and set the baud rate to 115200.
 
@@ -205,13 +205,13 @@ The timings are for 100'000 read/write operations, in milliseconds. The empty lo
 |                       | STM32F103RB 72MHz|STM32F446RE 180MHz| STM32H747 480MHz| ESP8266 80MHz |
 | :---------            | ---------:       | ---------:       | ----------:     | -----------:  |
 | Board                 | Nucleo-64        | Nucleo-64        | Arduino GIGA R1 | LOLIN D1 Mini |
-| Empty loop time       | 25.04            | 7.78             | 1.05            | 16.25         |
-| digitalRead()         | 154.90           | 28.93            | 11.68           | 58.75         |
-| digitalWrite()        | 187.86           | 33.38            | 12.83           | 156.25        |
-| OptimizedGPIO.read()  | 20.34            | 3.92             | 3.57            | 16.25         |
-| OptimizedGPIO.set()   | 21.90            | 3.92             | 8.18            | 10.00         |
+| Empty loop time       | 25.04            | 7.78             | 1.26            | 16.25         |
+| digitalRead()         | 154.90           | 28.93            | 11.28           | 58.75         |
+| digitalWrite()        | 187.86           | 33.38            | 12.40           | 156.25        |
+| OptimizedGPIO.read()  | 20.34            | 3.92             | 4.20            | 16.25         |
+| OptimizedGPIO.set()   | 21.90            | 3.92             | 7.97            | 10.00         |
 
-The program was built with "Default Optimization". Compiler optimization affects the results. 
+The program was built with "Default Optimization". The compiler optimization setting affects the results, sometimes dramatically. 
 
 
 > [!NOTE]
