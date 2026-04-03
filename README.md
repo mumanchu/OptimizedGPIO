@@ -2,7 +2,7 @@
 
 This fast General-Purpose Input/Output (GPIO) library uses a single include file `OptimizedGPIO.h` to provide top-speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed to your code if you change the board type.
 
-The voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know this stuff already.
+The voluminous README text is aimed at fledgling Arduino developers. The rest of you probably know most of this stuff already.
 
 This library was originally developed as part of a cross-platform Stepper Motor library, which will be released ~~soon~~ eventually.
 
@@ -33,11 +33,11 @@ This library was originally developed as part of a cross-platform Stepper Motor 
 
 The traditional `digitalRead()` and `digitalWrite()` functions are quite slow when compared to stripped-down code that accesses the microcontroller's GPIO registers directly. The fast `OptimizedGPIO` versions in this library are typically 10 times faster, see [Timing Comparisons](#timing-comparisons).
 
-This is because `digitalRead()` and `digitalWrite()` do a lot of work and validation for every access. This could be done _just once_ in a `begin()` method, which saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then acessing the I/O will have "unexpected" results. So for this library you must create an object for each pin and call its `begin()` method and check its return value. See [Using the Library](#using-the-library) for details.
+This is because `digitalRead()` and `digitalWrite()` do a lot of work and validation for every access. This could be done _just once_ in a `begin()` method, which saves a lot of time when the program is running. The drawback is that runtime validation is not done, so if `begin()` returns `false`, then accessing the I/O will have "unexpected" results. So for this library you must create an object for each pin and call its `begin()` method and check the return value. See [Using the Library](#using-the-library) for details.
 
-Faster I/O is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register](#bit-banging) example.
+Faster I/O is particularly important in an interrupt handler (ISR), which must be as short as possible. It's also significant if you are doing a lot of "bit-banging" as in the [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging) example.
 
-Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not being used as a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, marked with `\\>>> ... \\<<<`.
+Below is the Arduino AVR code for `digitalWrite()`. The lines marked with `*` could be called in `begin()`. The lines marked with `**` are not needed if you are sure the output is not being used as a PWM output. So most of the code can be transferred to `begin()`, leaving only the code that directly accesses the MCU's GPIO output register, which I marked with `\\>>> ... \\<<<`.
 
 ```cpp
 void digitalWrite(uint8_t pin, uint8_t val)
@@ -161,6 +161,7 @@ An inline 'getter' method (a concept from C#) that returns the `pin` number. Ano
 > [!NOTE]
 > `pinMode()` should not be used after calling `OptimizedGPIO.begin()`, but you _can_ call the old `digitalRead()` and `digitalWrite()` on pins that have been initialised by `OptimizedGPIO.begin()`.
 > This means that with `OptimizedGPIO`, you cannot change the mode of a pin at runtime. But it is rare that anyone would want to do that.
+> (One reason you might want to do that is if you have one-wire communications, where the same pin sends a message then receives the response. So it's an output when sending, then an input when receiving. But there are other Libraries to do that. Or you can use the old 1K resistor trick that's used by TMC2209...)
 
 
 <!-- ================================================================================ -->
@@ -261,7 +262,7 @@ If you were to use `sti()` or `interrupts()` instead of `SREG = oldSREG;` then i
 Many MCUs, like the SAMD and the ESP32, have special registers where you can write just one bit to set or clear a digital output, e.g. the SAMD's `OUTSET` and `OUTCLR`, or the ESP32's `GPIO_OUT_W1TS_REG` (write-1-to-set) and `GPIO_OUT_W1TC_REG` (write-1-to-clear). This is great because it does not need a dangerous (and slow) read-modify-write operation to set an output, and you don't need to disable interrupts.
 
 > [!NOTE]
-> The `toggle()` methods illustrate the code to save, disable and restore the interrupt state for the particular MCU. But some of them just use `noInterrupts()` and `interrupts()` so these should _NOT_ be called from an interrupt handler (ISR).
+> The `toggle()` methods illustrate the code to save, disable and restore the interrupt state for the particular MCU. But some of them just use `noInterrupts()` and `interrupts()` so these should _NOT_ be called from an interrupt handler (ISR) because interrupts will be enabled on return.
 
 <!-- ESP32 does not have a single simple "interrupts on/off" flag like older AVR Arduinos. -->
 
@@ -299,6 +300,7 @@ The source code for the example is here:\
 
 ![Schematic of Arduino connections to 74HC595 Serial Shift Register](/images/shift-register-8.png)
 
+(The QH to D5 connection is for testing only, see the `shiftOutTest()` method.)
 
 <!-- ================================================================================ -->
 
@@ -328,7 +330,8 @@ https://www.visualmicro.com/
 |:---------- |:---------|:----------- |
 | 2026.xx.xx | 1.0.0	| The first version! |
 
+<br/>
 
-Joke Of The Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
+Joke of the Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
 
 
