@@ -1,4 +1,4 @@
-﻿# OptimizedGPIO
+# OptimizedGPIO
 
 This fast General-Purpose Input/Output (GPIO) library uses a single include file `OptimizedGPIO.h` to provide top-speed optimized digital I/O for STM32, SAMD, AVR, ESP32 and ESP8266 boards. The right code for the board is selected automatically by `#ifdef` directives, so you don't need to do anything special. The same [API](#api) is used for each board, so no changes are needed to your code if you change the board type.
 
@@ -88,7 +88,7 @@ To make it even faster, instead of using a single `write()` method, it has separ
 
 ## Using the Library
 
-1. Install the library using the Arduino Library Manager, or download the latest ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". https://github.com/mumanchu/OptimizedGPIO
+1. Install the library using the Arduino Library Manager, or download the latest ZIP file from github and install it with "Sketch / Include Library > Add .ZIP Library...". 
 
 As a first step you could open the `OptimizedGPIO.ino` sketch from "File / Examples > Examples from Custom Libraries / OptimizedGPIO". 
 
@@ -177,9 +177,9 @@ To see the output, open 'Serial Monitor' and set the baud rate to 115200.
 
 You can see the timing comparisons below (converted to milliseconds). Try it with your own board and see what you get.
 
-/examples/OptimizedGPIO/OptimizedGPIO.ino
+[/examples/OptimizedGPIO/OptimizedGPIO.ino](/examples/OptimizedGPIO/OptimizedGPIO.ino)
 
-There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift register, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
+There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift register, providing very cheap and fast additional outputs. See [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
 
 <!-- ================================================================================ -->
 
@@ -293,8 +293,8 @@ Writing a byte using an I2C expander at 1MHz = **180uS** \
 Writing a byte using digitalWrite() = **31uS** \
 Writing a byte using OptimizedGPIO = **3uS** !
 
-The source code for the example is here:
-/examples/OutputExpander8/OutputExpander8.ino
+The source code for the example is here:\
+[/examples/OutputExpander8/OutputExpander8.ino](/examples/OutputExpander8/OutputExpander8.ino)
 
 
 ![Schematic of Arduino connections to 74HC595 Serial Shift Register](/images/shift-register-8.png)
