@@ -177,7 +177,7 @@ To see the output, open 'Serial Monitor' and set the baud rate to 115200.
 
 You can see the timing comparisons below (converted to milliseconds). Try it with your own board and see what you get.
 
-https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OptimizedGPIO/OptimizedGPIO.ino
+/examples/OptimizedGPIO/OptimizedGPIO.ino
 
 There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift register, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
 
@@ -294,10 +294,10 @@ Writing a byte using digitalWrite() = **31uS** \
 Writing a byte using OptimizedGPIO = **3uS** !
 
 The source code for the example is here:
-https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OutputExpander8/OutputExpander8.ino
+/examples/OutputExpander8/OutputExpander8.ino
 
 
-![Schematic of Arduino connections to 74HC595 Serial Shift Register](https://github.com/mumanchu/OptimizedGPIO/blob/main/images/shift-register-8.png)
+![Schematic of Arduino connections to 74HC595 Serial Shift Register](/images/shift-register-8.png)
 
 
 <!-- ================================================================================ -->
