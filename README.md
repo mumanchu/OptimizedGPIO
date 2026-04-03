@@ -294,6 +294,7 @@ Writing a byte using digitalWrite() = **31uS** \
 Writing a byte using OptimizedGPIO = **3uS** !
 
 The source code for the example is here:\
+[/examples/OutputExpander8/OutputExpander8.h](/examples/OutputExpander8/OutputExpander8.h) \
 [/examples/OutputExpander8/OutputExpander8.ino](/examples/OutputExpander8/OutputExpander8.ino)
 
 
