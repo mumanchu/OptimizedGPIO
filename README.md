@@ -6,8 +6,6 @@ The voluminous README text is aimed at fledgling Arduino developers. The rest of
 
 This library was originally developed as part of a cross-platform Stepper Motor library, which will be released ~~soon~~ eventually.
 
-Joke of the Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
-
 > [!NOTE]
 > This library works only for digital I/O. Do not use it for analog or PWM outputs.
 
@@ -123,7 +121,7 @@ void setup() {
 	bool b = inputPin.read();
 ```
 
-There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift regiater, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
+There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift register, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
 
 > [!WARNING]
 > If you see the warning message `#warning Unknown microcontroller, needs OptimizedGPIO class` when you build the program, it means that your MCU is not supported by the library, and the default (slow) `digitalRead()` and `digitalWrite()` functions will be used. It could also mean that the `#define` symbol used to select the MCU has not been defined. The OptimizedGPIO library uses a single symbol to select the architecture, and these symbols have not been standardised on the Arduino platform. _If you get this warning, please email us on `info@muman.ch` with the details of your board, and we'll fix it for the next release._
@@ -175,12 +173,13 @@ The example sketch `OptimizedGPIO.ino` writes to `Serial` the times in microseco
 
 It can also show the timings for `digitalReadFast()` and `digitalWriteFast()`, but these functions are not present on all platforms. Enable these with the `#if`.
 
-To see the ouput, open 'Serial Monitor' and set the baud rate to 115200.
+To see the output, open 'Serial Monitor' and set the baud rate to 115200.
 
 You can see the timing comparisons below (converted to milliseconds). Try it with your own board and see what you get.
 
 https://github.com/mumanchu/OptimizedGPIO/blob/main/examples/OptimizedGPIO/OptimizedGPIO.ino
 
+There is also an example `OutputExpander8.ino` that uses `OptimizedGPIO` to bit-bang a serial shift register, providing very cheap and fast additional outputs. see [Using OptimizedGPIO to bit-bang a serial shift register (Output Expander)](#bit-banging)
 
 <!-- ================================================================================ -->
 
@@ -325,4 +324,8 @@ https://www.visualmicro.com/
 | Date       | Version  | Description |
 |:---------- |:---------|:----------- |
 | 2026.xx.xx | 1.0.0	| The first version! |
+
+
+Joke Of The Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
+
 
