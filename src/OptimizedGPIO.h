@@ -12,11 +12,6 @@
  (which may or may not be reported, and may go into InfiniteLoop)
  
  Do not write to inputs or PWM outputs, the behaviour is undefined!
-
- If outputs on a port can be modified by an interrupt, toggle() and
- other methods which do read-modify-write must disable interrupts,
- see commented out code below. But this makes them slower, so only
- disable interrupts if the output is modified by an interrupt handler.
 */
 
 #include <Arduino.h>
