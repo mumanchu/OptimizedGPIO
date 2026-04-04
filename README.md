@@ -298,13 +298,8 @@ The source code for the example is here:\
 [/examples/OutputExpander8/OutputExpander8.ino](/examples/OutputExpander8/OutputExpander8.ino)
 
 **Schematic** \
-![Schematic of Arduino connections to 74HC595 Serial Shift Register](https://github.com/mumanchu/mumanchu/blob/main/assets/shift-register-8.png) \
+![Schematic of Arduino connections to 74HC595 Serial Shift Register](images/shift-register-8.png) \
 (The QH to D5 connection is for testing only, see the `shiftOutTest()` method.)
-
-**Clocking out 0xAA** \
-![Clocking out 0xAA](https://github.com/mumanchu/mumanchu/blob/main/assets/shift-out-0xaa.png) \
-The orange trace is CLOCK, the blue trace is DATA. On an Arduino Zero (48MHz), the clock pulse is 200nS wide.
-
 
 <!-- ================================================================================ -->
 
