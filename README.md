@@ -278,7 +278,7 @@ The cheapest (and fastest) way to extend the number of outputs of your MCU is to
 
 Serial shift registers are also _extremely fast_ when compared to expensive SPI or I2C I/O Expanders like the Microchip MCP23017. See the blog entry, [MCP23xxx 8/16-Bit I2C/SPI GPIO Expander](https://muman.ch/muman/index.htm?muman-mcp23017.htm) to find out more about those. 
 
-You need 3 outputs to write to a serial shift register chip: DATA, CLOCK and STROBE (although the chip's pins may have different names). CLOCK clocks in a DATA bit on its rising edge. After 8 bits have been clocked in, STROBE transfers the data to the 8 outputs without any glitches. 
+You need 3 outputs to write to a serial shift register chip: DATA, CLOCK and STROBE (although the chip's pins may have different names). CLOCK clocks in a DATA bit on its rising edge. After 8 data bits have been clocked in, STROBE transfers the data to the 8 outputs without any glitches. 
 
 Most chips also have a CLEAR pin which resets the outputs, but you don't have to use it - just write `0x00`. Some have tri-state outputs (they are 'floating' unless switched to GND), so there's an /ENABLE pin too - tie that GND unless you need tri-state outputs.
 
@@ -290,17 +290,21 @@ To expand the number _inputs_, you can do the reverse with a 'parallel-in-serial
 
 **Here's the timing for the shift-register Output Expander** \
 Writing a byte using an I2C expander at 1MHz = **180uS** \
-Writing a byte using digitalWrite() = **31uS** \
-Writing a byte using OptimizedGPIO = **3uS** !
+Writing a byte using `digitalWrite()` = **31uS** \
+Writing a byte using `OptimizedGPIO` = **3uS** !
 
 The source code for the example is here:\
 [/examples/OutputExpander8/OutputExpander8.h](/examples/OutputExpander8/OutputExpander8.h) \
 [/examples/OutputExpander8/OutputExpander8.ino](/examples/OutputExpander8/OutputExpander8.ino)
 
-
-![Schematic of Arduino connections to 74HC595 Serial Shift Register](/images/shift-register-8.png)
-
+**Schematic** \
+![Schematic of Arduino connections to 74HC595 Serial Shift Register](https://github.com/mumanchu/mumanchu/blob/main/assets/shift-register-8.png) \
 (The QH to D5 connection is for testing only, see the `shiftOutTest()` method.)
+
+**Clocking out 0xAA** \
+![Clocking out 0xAA](https://github.com/mumanchu/mumanchu/blob/main/assets/shift-out-0xaa.png) \
+The orange trace is CLOCK, the blue trace is DATA. On an Arduino Zero (48MHz), the clock pulse is 200nS wide.
+
 
 <!-- ================================================================================ -->
 
