@@ -196,7 +196,7 @@ The timings are for 100'000 read/write operations, in milliseconds. The empty lo
 |                       | At328P AVR 16MHz| At2560 AVR 16MHz  | SAMD21 48MHz | SAMD51 120MHz     | ESP32 240MHz   | ESP32S3 240MHz | ESP32S3 240MHz    |
 | :---------            | ---------:      | ---------:        | ---------:   | ---------:        | -----------:   | ---------:     | ---------:        |
 | Board                 | Arduino Uno R3  | Arduino Mega 2560 | Arduino Zero | Adafruit Metro M4 | ESP32-WROOM-32 | ESP32 Mini     | Seeed Studio XIAO |
-| Empty loop time       | 301.80          | 295.55            | 33.40        | 10.02             | 8.37           | 8.88           | 66.98             |
+| Empty loop time       | 301.80          | 295.55            | 33.40        | 10.02             | 8.37           | 8.88           | 8.98             |
 | digitalRead()         | 333.22          | 459.29            | 135.69       | 24.20             | 19.70          | 38.99          | 39.81             |
 | digitalWrite()        | 314.36          | 471.88            | 167.00       | 40.90             | 31.45          | 52.41          | 51.10             |
 | OptimizedGPIO.read()  | 18.86           | 12.85             | 22.96        | 5.84              | 5.87           | 3.84           | 7.13              |
@@ -327,7 +327,7 @@ https://www.visualmicro.com/
 
 | Date       | Version  | Description |
 |:---------- |:---------|:----------- |
-| 2026.xx.xx | 1.0.0	| The first version! |
+| 2026.04.04 | 1.0.0	| The first version! |
 
 <br/>
 
