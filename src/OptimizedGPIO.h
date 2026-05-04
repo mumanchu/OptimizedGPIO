@@ -60,7 +60,7 @@ inline void OptimizedGPIO::toggle()
 {
 	bool interruptsEnabled = !(__get_PRIMASK() & 1);
 	noInterrupts();
-	port->ODR ^= pin;
+	port->ODR ^= mask;
 	if (interruptsEnabled)
 		interrupts();
 }
