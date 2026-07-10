@@ -331,6 +331,10 @@ https://www.visualmicro.com/
 
 <br/>
 
-Joke of the Week: _"His software had more bugs in it than the Amazon Rainforest". (Not referring to me, of course.)_
+## Joke of the Week
+
+_"His software had more bugs in it than the Amazon Rainforest"._
+
+(Not referring to me, of course.)
 
 
