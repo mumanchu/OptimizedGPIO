@@ -333,7 +333,7 @@ https://www.visualmicro.com/
 
 ## Joke of the Week
 
-_"His software had more bugs in it than the Amazon Rainforest"._
+_"His software had more bugs in it than the Amazon Rainforest."_
 
 (Not referring to me, of course.)
 
